@@ -21,7 +21,7 @@ export function validateOpinion(opinion: string): string | null {
 export function validatePassageExists(sel: BibleSelection): string | null {
   const { missing } = getPassageText(sel.book, sel.chapter, sel.startVerse, sel.endVerse);
   if (missing) {
-    return "선택한 구간의 본문 데이터가 없습니다. 샘플 구간(창세기 1, 요한복음 3 등)을 이용해 주세요.";
+    return "선택한 구간의 본문을 불러오지 못했습니다. 잠시 후 다시 시도하거나, npm run bible:fetch 로 본문 데이터를 설치했는지 확인해 주세요.";
   }
   return null;
 }

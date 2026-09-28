@@ -35,7 +35,13 @@ npm run smoke:video
 
 ## 성경 본문 데이터
 
-개발용 샘플은 `data/bible-text.json` (창세기 1, 요한복음 3 등)입니다. 전체 66권 본문은 데이터 파일만 교체하면 됩니다.
+개역한글(KRV) 66권 전체는 `data/bible-text/` (권별 JSON)에 저장됩니다. 처음 클론 후 또는 본문이 없을 때:
+
+```bash
+npm run bible:fetch
+```
+
+(bolls.life KRV API에서 내려받습니다. 이용 조건·저작권은 해당 출처를 확인하세요.)
 
 ## 사용자 미디어 교체
 

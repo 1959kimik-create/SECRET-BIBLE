@@ -15,15 +15,28 @@ type Props = {
   value: BibleSelection;
   onChange: (next: BibleSelection) => void;
   error?: string | null;
+  /** Re-render verse lists after async book text load */
+  textLoadTick?: number;
+  textLoading?: boolean;
+  textReady?: boolean;
 };
 
-export function BibleSelector({ value, onChange, error }: Props) {
+export function BibleSelector({
+  value,
+  onChange,
+  error,
+  textLoadTick = 0,
+  textLoading = false,
+  textReady = false,
+}: Props) {
   const books = getBooks();
   const chapters = value.book ? getChapterNumbers(value.book) : [];
   const verses = useMemo(
     () =>
-      value.book && value.chapter ? getAvailableVersesForChapter(value.book, value.chapter) : [],
-    [value.book, value.chapter]
+      value.book && value.chapter && textReady
+        ? getAvailableVersesForChapter(value.book, value.chapter)
+        : [],
+    [value.book, value.chapter, textReady, textLoadTick]
   );
 
   const update = (partial: Partial<BibleSelection>) => {
@@ -130,6 +143,14 @@ export function BibleSelector({ value, onChange, error }: Props) {
         </select>
       </label>
 
+      {textLoading ? (
+        <p className="sm:col-span-2 lg:col-span-4 text-sm text-zinc-500">성경 본문 불러오는 중…</p>
+      ) : null}
+      {!textLoading && value.book && !textReady ? (
+        <p className="sm:col-span-2 lg:col-span-4 text-sm text-amber-400/90">
+          본문 데이터가 없습니다. 프로젝트에서 npm run bible:fetch 를 실행해 주세요.
+        </p>
+      ) : null}
       {error ? <p className="sm:col-span-2 lg:col-span-4 text-sm text-red-400">{error}</p> : null}
     </div>
   );

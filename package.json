@@ -15,7 +15,8 @@
     "electron:dev": "npm run build:electron && npm run predev:electron && concurrently -k \"next dev -p 3000 --webpack\" \"wait-on http://127.0.0.1:3000 && node scripts/launch-electron.mjs\"",
     "electron:app": "npm run build:electron && node scripts/predev.mjs && npm run build && concurrently -k \"next start -p 3000\" \"wait-on http://127.0.0.1:3000 && node scripts/launch-electron.mjs\"",
     "smoke:ffmpeg": "tsx scripts/smoke-ffmpeg.ts",
-    "smoke:video": "tsx scripts/smoke-video.ts"
+    "smoke:video": "tsx scripts/smoke-video.ts",
+    "bible:fetch": "node scripts/fetch-bible-krv.mjs"
   },
   "dependencies": {
     "@ffmpeg-installer/ffmpeg": "^1.1.0",

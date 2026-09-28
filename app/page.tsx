@@ -10,6 +10,8 @@ import { SaveDialog } from "@/components/SaveDialog";
 import { StepIndicator } from "@/components/StepIndicator";
 import { FormAlert } from "@/components/FormAlert";
 import { getPassageText, formatPassageRef } from "@/lib/bible/getVerses";
+import { getAvailableVersesForChapter } from "@/lib/bible/verses";
+import { useBibleText } from "@/lib/bible/useBibleText";
 import { buildDefaultFilename } from "@/lib/utils/filenameClient";
 import {
   validateOpinion,
@@ -82,6 +84,28 @@ export default function HomePage() {
     paintPromptBox(message, success);
   }, []);
 
+  const bookForTextLoad = selection.book || "";
+  const {
+    loading: bibleTextLoading,
+    ready: bibleTextReady,
+    loadTick: bibleTextLoadTick,
+  } = useBibleText(bookForTextLoad);
+
+  useEffect(() => {
+    if (!bibleTextReady || !selection.book) return;
+    const verses = getAvailableVersesForChapter(selection.book, selection.chapter);
+    if (!verses.length) return;
+    setSelection((prev) => {
+      if (prev.book !== selection.book || prev.chapter !== selection.chapter) return prev;
+      let startVerse = prev.startVerse;
+      let endVerse = prev.endVerse;
+      if (!verses.includes(startVerse)) startVerse = verses[0];
+      if (!verses.includes(endVerse) || endVerse < startVerse) endVerse = startVerse;
+      if (startVerse === prev.startVerse && endVerse === prev.endVerse) return prev;
+      return { ...prev, startVerse, endVerse };
+    });
+  }, [bibleTextReady, bibleTextLoadTick, selection.book, selection.chapter]);
+
   const reference = useMemo(
     () =>
       selection.book
@@ -95,7 +119,7 @@ export default function HomePage() {
       selection.book
         ? getPassageText(selection.book, selection.chapter, selection.startVerse, selection.endVerse)
         : { text: "", missing: false },
-    [selection]
+    [selection, bibleTextReady, bibleTextLoadTick]
   );
 
   const resetAll = useCallback(() => {
@@ -133,6 +157,9 @@ export default function HomePage() {
     | { ok: false; message: string } => {
     const selErr = validateSelection(selection);
     if (selErr) return { ok: false, message: selErr };
+    if (!bibleTextReady) {
+      return { ok: false, message: "성경 본문을 불러오는 중입니다. 잠시 후 다시 시도해 주세요." };
+    }
     const opText = getCurrentOpinion();
     const opErr = validateOpinion(opText);
     if (opErr) return { ok: false, message: opErr };
@@ -406,6 +433,9 @@ export default function HomePage() {
                 setFormWarning(next.book ? validatePassageExists(next) : null);
               }}
               error={null}
+              textLoading={bibleTextLoading}
+              textReady={bibleTextReady}
+              textLoadTick={bibleTextLoadTick}
             />
             {selectorValue.book ? (
               <>

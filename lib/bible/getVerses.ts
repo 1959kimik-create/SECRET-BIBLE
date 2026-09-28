@@ -1,23 +1,11 @@
-import verses from "@/data/bible-text.json";
-
-export type VerseRecord = {
-  book: string;
-  chapter: number;
-  verse: number;
-  text: string;
-};
-
-/** Placeholder verse range when sample text is missing (UI still works). */
-export function getVersesInChapter(book: string, chapter: number): number[] {
-  const max = book === "시편" && chapter === 119 ? 176 : 30;
-  return Array.from({ length: max }, (_, i) => i + 1);
-}
+import {
+  getLoadedVerseText,
+  isBookTextLoaded,
+} from "@/lib/bible/bibleTextStore";
 
 export function getVerseText(book: string, chapter: number, verse: number): string | null {
-  const found = (verses as VerseRecord[]).find(
-    (v) => v.book === book && v.chapter === chapter && v.verse === verse
-  );
-  return found?.text ?? null;
+  if (!isBookTextLoaded(book)) return null;
+  return getLoadedVerseText(book, chapter, verse);
 }
 
 export function getPassageText(
@@ -26,13 +14,20 @@ export function getPassageText(
   startVerse: number,
   endVerse: number
 ): { text: string; missing: boolean } {
+  if (!isBookTextLoaded(book)) {
+    return {
+      text: "(성경 본문을 불러오는 중이거나, data/bible-text/ 데이터가 없습니다. npm run bible:fetch 실행 후 다시 시도해 주세요.)",
+      missing: true,
+    };
+  }
+
   const parts: string[] = [];
   let missing = false;
   for (let v = startVerse; v <= endVerse; v++) {
     const t = getVerseText(book, chapter, v);
     if (!t) {
       missing = true;
-      parts.push(`${v}. (본문 데이터 없음 — 샘플 구간만 제공됩니다)`);
+      parts.push(`${v}. (본문을 찾을 수 없습니다)`);
     } else {
       parts.push(`${v}. ${t}`);
     }
