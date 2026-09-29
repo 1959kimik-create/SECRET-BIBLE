@@ -1,7 +1,7 @@
 import fs from "fs";
 import os from "os";
 import path from "path";
-import { escapeFfmpegPath, getFontPath } from "@/lib/utils/paths";
+import { escapeFfmpegPath, getBoldFontPath, getFontPath } from "@/lib/utils/paths";
 
 const OVERLAY_DIR = path.join(os.tmpdir(), "secret_bible_ffmpeg_overlay");
 
@@ -15,6 +15,23 @@ export function getFfmpegDrawtextFontPath(): string {
   const dir = ensureOverlayDir();
   const dest = path.join(dir, "korean.ttf");
   const src = getFontPath();
+  const srcStat = fs.statSync(src);
+  if (!fs.existsSync(dest)) {
+    fs.copyFileSync(src, dest);
+  } else {
+    const destStat = fs.statSync(dest);
+    if (destStat.mtimeMs < srcStat.mtimeMs) {
+      fs.copyFileSync(src, dest);
+    }
+  }
+  return escapeFfmpegPath(dest);
+}
+
+/** FFmpeg drawtext용 굵은 한글 폰트 */
+export function getFfmpegDrawtextBoldFontPath(): string {
+  const dir = ensureOverlayDir();
+  const dest = path.join(dir, "korean-bold.ttf");
+  const src = getBoldFontPath();
   const srcStat = fs.statSync(src);
   if (!fs.existsSync(dest)) {
     fs.copyFileSync(src, dest);
