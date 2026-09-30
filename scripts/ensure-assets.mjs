@@ -21,6 +21,7 @@ function run(args) {
 
 const intro = path.join(publicDir, "intro.mp4");
 const outro = path.join(publicDir, "outro.mp4");
+const contentBg = path.join(publicDir, "content-bg.mp4");
 const bgm = path.join(publicDir, "background.mp3");
 
 if (!fs.existsSync(intro)) {
@@ -53,6 +54,22 @@ if (!fs.existsSync(outro)) {
     outro,
   ]);
   console.log("Created placeholder outro.mp4");
+}
+
+if (!fs.existsSync(contentBg)) {
+  run([
+    "-y",
+    "-f",
+    "lavfi",
+    "-i",
+    "color=c=0x0a1628:s=1920x1080:d=12",
+    "-c:v",
+    "libx264",
+    "-pix_fmt",
+    "yuv420p",
+    contentBg,
+  ]);
+  console.log("Created placeholder content-bg.mp4 (replace with your looping background)");
 }
 
 if (!fs.existsSync(bgm)) {

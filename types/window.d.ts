@@ -12,6 +12,7 @@ export type SecretBibleApi = {
     defaultFilename: string
   ) => Promise<{ ok: boolean; message?: string; filePath?: string }>;
   exitApp: () => Promise<void>;
+  focusWindow: () => Promise<void>;
   onProgress: (callback: (progress: VideoProgress) => void) => () => void;
   getVideoPreviewUrl: (filePath: string) => Promise<string | null>;
 };

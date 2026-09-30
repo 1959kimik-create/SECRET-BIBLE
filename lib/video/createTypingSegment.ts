@@ -15,6 +15,7 @@ export type TypingSegmentOptions = {
   fontSize: number;
   titleFontSize: number;
   settings: VideoSettings;
+  backgroundVideoPath: string;
   workDir: string;
   label: string;
   onFrameProgress?: (current: number, total: number) => void;
@@ -49,8 +50,7 @@ function renderFrame(
   const lines = wrapText(ctx, visibleText, maxWidth);
   const displayLines = lines.length > maxLines ? lines.slice(0, maxLines) : lines;
 
-  ctx.fillStyle = "#000000";
-  ctx.fillRect(0, 0, width, height);
+  ctx.clearRect(0, 0, width, height);
 
   ctx.fillStyle = "#FFFFFF";
   ctx.font = `${options.titleFontSize}px ${FONT_FAMILY_BOLD}`;
@@ -108,8 +108,8 @@ export async function createTypingSegment(options: TypingSegmentOptions): Promis
       maxLines,
       ""
     );
-    const framePath = path.join(framesDir, `frame_${String(frameIndex).padStart(5, "0")}.jpg`);
-    fs.writeFileSync(framePath, canvas.toBuffer("image/jpeg", 0.82));
+    const framePath = path.join(framesDir, `frame_${String(frameIndex).padStart(5, "0")}.png`);
+    fs.writeFileSync(framePath, canvas.toBuffer("image/png"));
     lastFramePath = framePath;
     options.onFrameProgress?.(frameIndex, totalSteps);
     frameIndex++;
@@ -130,35 +130,46 @@ export async function createTypingSegment(options: TypingSegmentOptions): Promis
       maxLines,
       visibleText
     );
-    const framePath = path.join(framesDir, `frame_${String(frameIndex).padStart(5, "0")}.jpg`);
-    fs.writeFileSync(framePath, canvas.toBuffer("image/jpeg", 0.82));
+    const framePath = path.join(framesDir, `frame_${String(frameIndex).padStart(5, "0")}.png`);
+    fs.writeFileSync(framePath, canvas.toBuffer("image/png"));
     lastFramePath = framePath;
     options.onFrameProgress?.(frameIndex, totalSteps);
     frameIndex++;
   }
 
   for (let h = 0; h < holdSteps; h++) {
-    const framePath = path.join(framesDir, `frame_${String(frameIndex).padStart(5, "0")}.jpg`);
+    const framePath = path.join(framesDir, `frame_${String(frameIndex).padStart(5, "0")}.png`);
     fs.copyFileSync(lastFramePath, framePath);
     options.onFrameProgress?.(frameIndex, totalSteps);
     frameIndex++;
   }
 
   const totalFrames = frameIndex - 1;
+  const fps = charsPerSecond;
+  const bgPath = options.backgroundVideoPath;
+  const overlayPattern = path.join(framesDir, "frame_%05d.png");
+  const vf = `[0:v]scale=${width}:${height}:force_original_aspect_ratio=decrease,pad=${width}:${height}:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=${fps}[bg];[bg][1:v]overlay=0:0,format=yuv420p[v]`;
 
   await runFfmpeg([
     "-y",
+    "-stream_loop",
+    "-1",
+    "-i",
+    bgPath,
+    "-framerate",
+    String(fps),
     "-start_number",
     "1",
-    "-framerate",
-    String(charsPerSecond),
     "-i",
-    path.join(framesDir, "frame_%05d.jpg"),
+    overlayPattern,
+    "-filter_complex",
+    vf,
+    "-map",
+    "[v]",
     "-frames:v",
     String(totalFrames),
     ...H264_ULTRAFAST,
-    "-tune",
-    "stillimage",
+    "-an",
     options.outputPath,
   ]);
 

@@ -9,6 +9,9 @@ export function toUserFriendlyError(err: unknown): string {
   if (raw.includes("background.mp3") || raw.includes("BGM")) {
     return "배경음악(background.mp3)을 찾을 수 없습니다. public 폴더를 확인해 주세요.";
   }
+  if (raw.includes("content-bg.mp4")) {
+    return "본문 배경 영상(content-bg.mp4)을 찾을 수 없습니다. public 폴더를 확인해 주세요.";
+  }
   if (raw.includes("font") || raw.includes("폰트")) {
     return "한글 폰트를 찾을 수 없습니다. public/fonts 폴더를 확인해 주세요.";
   }

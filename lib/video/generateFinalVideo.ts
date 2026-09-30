@@ -1,7 +1,12 @@
 import fs from "fs";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
-import type { VideoProgress, VideoProject } from "@/lib/types";
+import {
+  TYPING_BIBLE_BODY_COLOR,
+  TYPING_OPINION_BODY_COLOR,
+  type VideoProgress,
+  type VideoProject,
+} from "@/lib/types";
 import { getGeneratedDir } from "@/lib/utils/paths";
 import { assetPath, validateMediaAssets } from "@/lib/video/validateAssets";
 import { overlayIntro, overlayOutro } from "@/lib/video/drawtextOverlay";
@@ -47,6 +52,7 @@ export async function generateFinalVideo(
     tempFiles.push(introOut);
     segmentPaths.push(introOut);
 
+    const contentBgPath = assetPath("content-bg.mp4");
     const blockCount = project.contentBlocks.length;
     for (let i = 0; i < blockCount; i++) {
       const block = project.contentBlocks[i];
@@ -60,10 +66,11 @@ export async function generateFinalVideo(
         outputPath: bibleOut,
         title: ref,
         bodyText: block.bibleText,
-        color: "#FFFFFF",
+        color: TYPING_BIBLE_BODY_COLOR,
         fontSize: project.videoSettings.bibleFontSize,
         titleFontSize: project.videoSettings.titleFontSize,
         settings: project.videoSettings,
+        backgroundVideoPath: contentBgPath,
         workDir,
         label: `bible_${i + 1}`,
         onFrameProgress: (cur, tot) => {
@@ -85,10 +92,11 @@ export async function generateFinalVideo(
         outputPath: opinionOut,
         title: "나의 의견",
         bodyText: block.opinion,
-        color: "#FFD700",
+        color: TYPING_OPINION_BODY_COLOR,
         fontSize: project.videoSettings.opinionFontSize,
         titleFontSize: project.videoSettings.titleFontSize,
         settings: project.videoSettings,
+        backgroundVideoPath: contentBgPath,
         workDir,
         label: `opinion_${i + 1}`,
         onFrameProgress: (cur, tot) => {

@@ -8,7 +8,7 @@ Windows에서는 **`시작하기.bat`** 더블클릭으로도 실행할 수 있�
 ## 준비물
 
 - Node.js 20+
-- `public/intro.mp4`, `public/outro.mp4`, `public/background.mp3` (없으면 `npm run assets:ensure`로 임시 파일 생성)
+- `public/intro.mp4`, `public/outro.mp4`, `public/content-bg.mp4`, `public/background.mp3` (없으면 `npm run assets:ensure`로 임시 파일 생성)
 - 한글 폰트: `public/fonts/` (Windows에서는 `malgun.ttf` 자동 복사)
 
 ## 실행

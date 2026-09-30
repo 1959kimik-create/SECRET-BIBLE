@@ -171,3 +171,12 @@ ipcMain.handle("get-video-preview-url", async (_event, filePath: string) => {
 ipcMain.handle("exit-app", () => {
   app.quit();
 });
+
+ipcMain.handle("focus-window", () => {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.show();
+    mainWindow.focus();
+    mainWindow.webContents.focus();
+  }
+});

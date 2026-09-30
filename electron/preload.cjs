@@ -8,6 +8,7 @@ contextBridge.exposeInMainWorld("secretBible", {
   saveVideo: (sourcePath, defaultFilename) =>
     ipcRenderer.invoke("save-video", { sourcePath, defaultFilename }),
   exitApp: () => ipcRenderer.invoke("exit-app"),
+  focusWindow: () => ipcRenderer.invoke("focus-window"),
   onProgress: (callback) => {
     const listener = (_event, payload) => callback(payload);
     ipcRenderer.on("video-progress", listener);

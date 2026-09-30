@@ -54,6 +54,18 @@ function paintPromptBox(message: string, success: boolean) {
     : "mb-6 whitespace-pre-line rounded-lg border-2 border-red-400 bg-red-950/60 px-4 py-3 text-center text-base text-red-100";
 }
 
+function restoreUiFocusAfterReset() {
+  requestAnimationFrame(() => {
+    const bookSelect = document.getElementById("bible-book-select");
+    if (bookSelect instanceof HTMLElement) {
+      bookSelect.focus({ preventScroll: true });
+      return;
+    }
+    if (document.body.tabIndex < 0) document.body.tabIndex = -1;
+    document.body.focus();
+  });
+}
+
 export default function HomePage() {
   const [step, setStep] = useState<AppStep>(1);
   const [selection, setSelection] = useState<BibleSelection>(initialSelection);
@@ -75,8 +87,11 @@ export default function HomePage() {
   const [promptFeedback, setPromptFeedback] = useState<string | null>(null);
   const [promptIsSuccess, setPromptIsSuccess] = useState(false);
   const [selectorKey, setSelectorKey] = useState(0);
+  const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
   const yesHandlerRef = useRef<() => void>(() => {});
   const noHandlerRef = useRef<() => void>(() => {});
+  const generationEpochRef = useRef(0);
+  const progressUnsubRef = useRef<(() => void) | null>(null);
 
   const writePrompt = useCallback((message: string, success: boolean) => {
     setPromptFeedback(message);
@@ -122,8 +137,17 @@ export default function HomePage() {
     [selection, bibleTextReady, bibleTextLoadTick]
   );
 
-  const resetAll = useCallback(() => {
-    void window.secretBible?.resetContentBlocks();
+  const resetAll = useCallback(async () => {
+    generationEpochRef.current += 1;
+    progressUnsubRef.current?.();
+    progressUnsubRef.current = null;
+
+    try {
+      await window.secretBible?.resetContentBlocks();
+    } catch {
+      /* ignore */
+    }
+
     setStep(1);
     setSelection(initialSelection);
     setOpinion("");
@@ -137,17 +161,22 @@ export default function HomePage() {
     setSaveMessage(null);
     setShowExitChoice(false);
     setPreviewAsk(null);
+    setSaving(false);
     setLastSavedHint(null);
     setAwaitingNextPick(false);
     setPromptFeedback(null);
     setPromptIsSuccess(false);
-    setSelectorKey(0);
+    setResetConfirmOpen(false);
+    setSelectorKey((k) => k + 1);
+
+    void window.secretBible?.focusWindow?.();
+    restoreUiFocusAfterReset();
   }, []);
 
-  const confirmReset = () => {
-    if (window.confirm("현재 작업을 삭제하고 처음으로 돌아가시겠습니까?")) {
-      resetAll();
-    }
+  const requestReset = () => setResetConfirmOpen(true);
+
+  const performReset = () => {
+    void resetAll();
   };
 
   const getCurrentOpinion = () => readOpinionFromDom(opinion);
@@ -255,7 +284,13 @@ export default function HomePage() {
     setPreviewUrl(null);
     setProgress({ percent: 0, stepLabel: "시작" });
 
-    const unsubscribe = window.secretBible.onProgress(setProgress);
+    const epoch = generationEpochRef.current;
+    progressUnsubRef.current?.();
+    const unsubscribe = window.secretBible.onProgress((p) => {
+      if (generationEpochRef.current !== epoch) return;
+      setProgress(p);
+    });
+    progressUnsubRef.current = unsubscribe;
 
     const result = await window.secretBible.generateVideo({
       contentBlocks: blocks,
@@ -263,6 +298,11 @@ export default function HomePage() {
     });
 
     unsubscribe();
+    if (progressUnsubRef.current === unsubscribe) {
+      progressUnsubRef.current = null;
+    }
+
+    if (generationEpochRef.current !== epoch) return;
 
     if (!result.ok) {
       setGenError(result.message);
@@ -358,6 +398,8 @@ export default function HomePage() {
       window.removeEventListener("secret-bible:start-generate", onGenerate);
       window.removeEventListener("secret-bible:prompt", onPrompt);
       window.removeEventListener("secret-bible:saved-next", onSavedNext);
+      progressUnsubRef.current?.();
+      progressUnsubRef.current = null;
     };
   }, [startGeneration]);
 
@@ -525,7 +567,7 @@ export default function HomePage() {
                   >
                     다시 시도
                   </button>
-                  <button type="button" onClick={confirmReset} className="rounded-lg border border-zinc-700 px-6 py-2">
+                  <button type="button" onClick={requestReset} className="rounded-lg border border-zinc-700 px-6 py-2">
                     처음으로
                   </button>
                 </div>
@@ -582,17 +624,17 @@ export default function HomePage() {
         {step === 6 && saveMessage ? (
           <div className="text-center">
             <p className="mb-8 text-lg text-amber-100">{saveMessage}</p>
-            <button type="button" onClick={confirmReset} className="rounded-lg border border-zinc-700 px-8 py-3">
+            <button type="button" onClick={requestReset} className="rounded-lg border border-zinc-700 px-8 py-3">
               처음으로
             </button>
           </div>
         ) : null}
 
-        {showExitChoice ? (
+        {showExitChoice && step >= 5 ? (
           <div className="mt-10 text-center">
             <p className="mb-6 text-lg">종료할까요?</p>
             <div className="flex justify-center gap-4">
-              <button type="button" onClick={confirmReset} className="rounded-lg border border-zinc-700 px-6 py-2">
+              <button type="button" onClick={requestReset} className="rounded-lg border border-zinc-700 px-6 py-2">
                 처음으로
               </button>
               <button
@@ -608,9 +650,41 @@ export default function HomePage() {
 
         {step <= 3 ? (
           <div className="mt-12 text-center">
-            <button type="button" onClick={confirmReset} className="text-xs text-zinc-700 hover:text-zinc-500">
+            <button type="button" onClick={requestReset} className="text-xs text-zinc-700 hover:text-zinc-500">
               작업 초기화
             </button>
+          </div>
+        ) : null}
+
+        {resetConfirmOpen ? (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 px-4"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="reset-confirm-title"
+          >
+            <div className="w-full max-w-md rounded-xl border border-zinc-700 bg-zinc-950 p-6 text-center shadow-xl">
+              <p id="reset-confirm-title" className="mb-6 text-lg text-zinc-100">
+                현재 작업을 삭제하고 처음으로 돌아가시겠습니까?
+              </p>
+              <div className="flex justify-center gap-4">
+                <button
+                  type="button"
+                  autoFocus
+                  onClick={performReset}
+                  className="rounded-lg border border-amber-500/40 px-6 py-2 text-amber-100"
+                >
+                  예
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setResetConfirmOpen(false)}
+                  className="rounded-lg border border-zinc-700 px-6 py-2 text-zinc-200"
+                >
+                  아니오
+                </button>
+              </div>
+            </div>
           </div>
         ) : null}
       </div>

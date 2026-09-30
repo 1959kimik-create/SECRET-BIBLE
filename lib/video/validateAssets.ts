@@ -4,7 +4,7 @@ import { getFontPath, getPublicDir } from "@/lib/utils/paths";
 
 export function validateMediaAssets(): void {
   const publicDir = getPublicDir();
-  const required = ["intro.mp4", "outro.mp4", "background.mp3"];
+  const required = ["intro.mp4", "outro.mp4", "background.mp3", "content-bg.mp4"];
   for (const file of required) {
     const full = path.join(publicDir, file);
     if (!fs.existsSync(full)) {
