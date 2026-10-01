@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
 import {
+  BIBLE_BACKGROUND_PLAYBACK_RATE,
   TYPING_BIBLE_BODY_COLOR,
   TYPING_OPINION_BODY_COLOR,
   type VideoProgress,
@@ -52,7 +53,8 @@ export async function generateFinalVideo(
     tempFiles.push(introOut);
     segmentPaths.push(introOut);
 
-    const contentBgPath = assetPath("content-bg.mp4");
+    const bibleBgPath = assetPath("text.mp4");
+    const opinionBgPath = assetPath("word.mp4");
     const blockCount = project.contentBlocks.length;
     for (let i = 0; i < blockCount; i++) {
       const block = project.contentBlocks[i];
@@ -70,7 +72,9 @@ export async function generateFinalVideo(
         fontSize: project.videoSettings.bibleFontSize,
         titleFontSize: project.videoSettings.titleFontSize,
         settings: project.videoSettings,
-        backgroundVideoPath: contentBgPath,
+        backgroundVideoPath: bibleBgPath,
+        backgroundPlaybackRate: BIBLE_BACKGROUND_PLAYBACK_RATE,
+        darkenBackground: true,
         workDir,
         label: `bible_${i + 1}`,
         onFrameProgress: (cur, tot) => {
@@ -96,7 +100,7 @@ export async function generateFinalVideo(
         fontSize: project.videoSettings.opinionFontSize,
         titleFontSize: project.videoSettings.titleFontSize,
         settings: project.videoSettings,
-        backgroundVideoPath: contentBgPath,
+        backgroundVideoPath: opinionBgPath,
         workDir,
         label: `opinion_${i + 1}`,
         onFrameProgress: (cur, tot) => {

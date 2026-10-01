@@ -16,6 +16,10 @@ export type TypingSegmentOptions = {
   titleFontSize: number;
   settings: VideoSettings;
   backgroundVideoPath: string;
+  /** 1 = normal, 0.25 = 25% speed */
+  backgroundPlaybackRate?: number;
+  /** 배경 영상을 어둡게 (성경 본문 가독성) */
+  darkenBackground?: boolean;
   workDir: string;
   label: string;
   onFrameProgress?: (current: number, total: number) => void;
@@ -148,7 +152,12 @@ export async function createTypingSegment(options: TypingSegmentOptions): Promis
   const fps = charsPerSecond;
   const bgPath = options.backgroundVideoPath;
   const overlayPattern = path.join(framesDir, "frame_%05d.png");
-  const vf = `[0:v]scale=${width}:${height}:force_original_aspect_ratio=decrease,pad=${width}:${height}:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=${fps}[bg];[bg][1:v]overlay=0:0,format=yuv420p[v]`;
+  const playbackRate = options.backgroundPlaybackRate ?? 1;
+  const setptsMul = playbackRate > 0 ? 1 / playbackRate : 1;
+  const setpts =
+    Math.abs(setptsMul - 1) < 0.001 ? "" : `,setpts=${setptsMul.toFixed(4)}*PTS`;
+  const darken = options.darkenBackground ? ",eq=brightness=-0.32:contrast=1.06:saturation=0.88" : "";
+  const vf = `[0:v]scale=${width}:${height}:force_original_aspect_ratio=decrease,pad=${width}:${height}:(ow-iw)/2:(oh-ih)/2,setsar=1${setpts}${darken},fps=${fps}[bg];[bg][1:v]overlay=0:0,format=yuv420p[v]`;
 
   await runFfmpeg([
     "-y",

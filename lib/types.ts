@@ -35,11 +35,13 @@ export type GenerateVideoResult =
 /** 본문 타이핑 본문 글자색 (성경 / 의견) */
 export const TYPING_BIBLE_BODY_COLOR = "#0078FF";
 export const TYPING_OPINION_BODY_COLOR = "#FFE032";
+/** 성경 본문 타이핑 배경(text.mp4) 재생 속도 (0.25 = 25%) */
+export const BIBLE_BACKGROUND_PLAYBACK_RATE = 0.25;
 
 export const DEFAULT_VIDEO_SETTINGS: VideoSettings = {
   width: 1920,
   height: 1080,
-  typingSpeed: 180,
+  typingSpeed: 195,
   bibleFontSize: 50,
   opinionFontSize: 50,
   titleFontSize: 58,
