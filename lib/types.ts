@@ -41,7 +41,7 @@ export const BIBLE_BACKGROUND_PLAYBACK_RATE = 0.25;
 export const DEFAULT_VIDEO_SETTINGS: VideoSettings = {
   width: 1920,
   height: 1080,
-  typingSpeed: 195,
+  typingSpeed: 210,
   bibleFontSize: 50,
   opinionFontSize: 50,
   titleFontSize: 58,

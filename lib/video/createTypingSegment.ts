@@ -52,7 +52,8 @@ function renderFrame(
   visibleText: string
 ): void {
   const lines = wrapText(ctx, visibleText, maxWidth);
-  const displayLines = lines.length > maxLines ? lines.slice(0, maxLines) : lines;
+  const displayLines =
+    lines.length > maxLines ? lines.slice(lines.length - maxLines) : lines;
 
   ctx.clearRect(0, 0, width, height);
 
@@ -156,7 +157,7 @@ export async function createTypingSegment(options: TypingSegmentOptions): Promis
   const setptsMul = playbackRate > 0 ? 1 / playbackRate : 1;
   const setpts =
     Math.abs(setptsMul - 1) < 0.001 ? "" : `,setpts=${setptsMul.toFixed(4)}*PTS`;
-  const darken = options.darkenBackground ? ",eq=brightness=-0.32:contrast=1.06:saturation=0.88" : "";
+  const darken = options.darkenBackground ? ",eq=brightness=-0.44:contrast=1.08:saturation=0.85" : "";
   const vf = `[0:v]scale=${width}:${height}:force_original_aspect_ratio=decrease,pad=${width}:${height}:(ow-iw)/2:(oh-ih)/2,setsar=1${setpts}${darken},fps=${fps}[bg];[bg][1:v]overlay=0:0,format=yuv420p[v]`;
 
   await runFfmpeg([
